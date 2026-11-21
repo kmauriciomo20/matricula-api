@@ -1,28 +1,34 @@
-Feature: : Matricula de cursos
-  Como alumno de CIBERTEC
-  Quiero matricularme en mis cursos
-  Para llevarlos en el ciclo
+# language: es
+@p1
+Característica: Matrícula del alumno
 
-  Scenario: Matricula valida con descuento por promedio y anulacion
-    Given  que Ana consulta la API de matricula
-    When se matricula con el codigo "i202610001" en el curso "PS3511"
-    Then el codigo de respuesta es 201
-    And el monto de la matricula es 288,0
-    And el estado de la matricula es "REGISTRADA"
-    When anula es matricula
-    Then el codigo de respuesta es 200
-    And el estado de la matricula es "ANULADA"
+  Antecedentes:
+    Dado que Luis consulta la API de matricula
+    Y el alumno "i202610002" inicia sesión con la clave "Cibertec2026"
 
-  Scenario Outline: Matricula rechazada por <motivo>
-    Given  que Ana consulta la API de matricula
-    When se matricula por codigo "<alumno>" en el curso "<curso>"
-    Then el codigo de respuesta es <status>
-    And el codigo de error es "<codigo>"
-    Examples:
-      | motivo             | alumno     | curso  | status | codigo               |
-      | deuda              | i202610004 | PS5511 | 422    | ALUMNO_CON_DEUDA     |
-      | duplicada          | i202610003 | IA5513 | 409    | MATRICULA_DUPLICADA  |
-      | falta de vacantes  | i202610001 | IA5513 | 409    | SIN_VACANTES         |
-      | cruce de horario   | i202610002 | QA5517 | 409    | CRUCE_HORARIO        |
-      | límite de créditos | i202610005 | TS5514 | 422    | LIMITE_CREDITOS      |
-      | alumno inexistente | i999999999 | PS5511 | 404    | ALUMNO_NO_ENCONTRADO |
+  Escenario: Cotizar Desarrollo de Aplicaciones Móviles
+    Cuando cotiza el curso "DM5512"
+    Entonces el codigo de respuesta es 200
+    Y el total de la cotización es 432
+
+  Escenario: Matricularse y pagar Desarrollo de Aplicaciones Móviles
+    Cuando cotiza el curso "DM5512"
+    Entonces el codigo de respuesta es 200
+    Cuando se matricula en el curso "DM5512"
+    Entonces el codigo de respuesta es 201
+    Y la matrícula queda "REGISTRADA"
+    Y el monto de la matrícula coincide con la cotización
+    Y la respuesta cumple el esquema "matricula.json"
+    Cuando paga la matrícula con el método "TRANSFERENCIA"
+    Entonces el codigo de respuesta es 200
+    Y la matrícula queda "PAGADA"
+    Y la fecha de pago tiene valor
+    Cuando consulta sus pagos
+    Entonces el codigo de respuesta es 200
+    Y su matrícula tiene un pago con método "TRANSFERENCIA" y operación con formato "OP-[0-9]{6}"
+
+  Escenario: Rechazar la matrícula duplicada en Pruebas de Software
+    Cuando se matricula en el curso "PS5511"
+    Entonces el codigo de respuesta es 409
+    Y el codigo de error es "MATRICULA_DUPLICADA"
+    Y la respuesta cumple el esquema "error.json"
